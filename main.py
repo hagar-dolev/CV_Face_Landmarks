@@ -3,15 +3,13 @@ from utils import *
 from data_preperation import *
 from regressors import Regressor
 
-
 try:
     import cPickle as pickle
 except ModuleNotFoundError:
     import pickle
 
 
-def train_Model(train_data, target_path):
-
+def train_model(train_data, target_path):
     regressors = []
     tage_shape = ()
     for i in range(Cascades):
@@ -30,9 +28,12 @@ def main():
     path = sys.argv[1]
     train_model_save_path = sys.argv[2]
 
-    mean_shape, train, test, all_training_tags, all_testing_tags, all_true_train_shapes = preprocess_data(path)
+    mean_shape, train, test, all_true_train_shapes = preprocess_data(path)
+    print("finished_preprocessing")
     train_data = generate_training_data(train, all_true_train_shapes, mean_shape)
-    train_Model(train_data, train_model_save_path)
+    print("Finished training data pre process")
+    train_model(train_data, train_model_save_path)
+    print("Finished training")
 
 
 if __name__ == '__main__':

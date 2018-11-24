@@ -46,8 +46,8 @@ def calc_mean_shape(shapes):
 
 def generate_rand_pixels_by_mean(mean_shape):
     max_y, min_y, max_x, min_x = find_bounding_box(mean_shape)
-    rand_x = np.random.choice(max_x, Pool_size)
-    rand_y = np.random.choice(max_y, Pool_size)
+    rand_x = np.random.choice(int(round(max_x)), Pool_size)
+    rand_y = np.random.choice(int(round(max_y)), Pool_size)
 
     points = np.array([rand_x, rand_y])
 
@@ -57,6 +57,7 @@ def generate_rand_pixels_by_mean(mean_shape):
 def find_bounding_box(shape):
     max_y = np.max(shape[:][1])
     min_y = np.min(shape[:][1])
+
     max_x = np.max(shape[:][0])
     min_x = np.min(shape[:][0])
 
@@ -64,12 +65,17 @@ def find_bounding_box(shape):
 
 
 def get_face(image, points):
+    # plt.imshow(image)
+    # plt.show()
+    # display_matches(image, image, points, points)
     max_y, min_y, max_x, min_x = find_bounding_box(points)
-    face = image[min_x: max_x + 1, min_y: max_y + 1]
-
+    face = image[int(round(min_y)): int(round(max_y)) + 1, int(round(min_x)): int(round(max_x)) + 1]
+    plt.imshow(face)
+    plt.show()
     return face
 
 ######################################################################
+
 
 def read_image(filename, representation):
     """

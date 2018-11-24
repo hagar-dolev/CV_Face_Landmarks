@@ -36,6 +36,7 @@ class Node(object):
         error = 0
 
         for image in images:
+            print(image.curr_pixels)
             if image.curr_pixels[cond.pixel_a_loc] - image.curr_pixels[cond.pixel_b_loc] > cond.threshold:
                 sum_average_right += (image.true_shape - image.curr_est_shape)
                 right_imgs.append(image)
@@ -55,7 +56,7 @@ class Node(object):
 
     def randomize_and_choose_cond(self, images):
         curr_cond = self.generate_rand_cond()
-        curr_err = self.calc_lserror(curr_cond)
+        curr_err = self.calc_lserror(curr_cond, images)
         min_err = curr_err
         min_cond = curr_cond
 
