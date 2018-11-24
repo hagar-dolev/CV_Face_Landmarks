@@ -13,7 +13,7 @@ MAX_VALUE = 256
 
 ###### Actual algorithm Related constants #######
 
-R = 5   # amount of regressors (forests) in the cascade
+Cascades = 5   # amount of regressors (forests) in the cascade
 
 Shrinkage_factor = 0.1
 Tree_Amount = 20
@@ -43,11 +43,8 @@ def calc_mean_shape(shapes):
     mean_shape[:][1] -= min_y + 1
     return mean_shape
 
-def mean_shape_to_curr_bbx():
-    pass
 
-
-def generate_rand_centered_pixels_by_mean(mean_shape):
+def generate_rand_pixels_by_mean(mean_shape):
     max_y, min_y, max_x, min_x = find_bounding_box(mean_shape)
     rand_x = np.random.choice(max_x, Pool_size)
     rand_y = np.random.choice(max_y, Pool_size)

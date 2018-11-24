@@ -145,6 +145,7 @@ class Tree(object):
         """
         self.root = Node(0, self.depth, self.pool_size)
         self.root.train(images)
+        print("Finished training tree")
 
     def predict_delta(self, image):
         return self.root.predict(image)

@@ -2,34 +2,9 @@ from utils import *
 from PIL import Image
 import os
 
-"""set = {name: {tag: [[]] , image: [[]], face: [[]],
-                scaled_tag: [[]], box: [[]], bbx_x_len: int, bbx_y_len: int,"""
+"""set = {name: { image: [[]]}"""
 
 'Sample = collections.namedtuple("Sample", ["name", "face", "true_shape"])'
-
-#
-# def scale_shape_to_percentage(min_x, min_y, bbx_x_len, bbx_y_len, shape):
-#     ## TODO: maybe should be changed center and not working
-#     scaled_shape = np.array(shape)
-#     scaled_shape[:, 0] = (scaled_shape[:, 0] - min_x) / bbx_x_len
-#     scaled_shape[:, 1] = (scaled_shape[:, 1] - min_y) / bbx_y_len
-#     return np.array(scaled_shape)
-#
-#
-# def scale_all(set_dict):
-#
-#     for name in set_dict.keys():
-#         shape = set_dict[name]["tag"]
-#
-#         max_y, min_y, max_x, min_x = find_bounding_box(shape)
-#         bbx_x_len = max_x - min_x
-#         bbx_y_len = max_y - min_y
-#         scaled_shape = scale_shape_to_percentage(min_x, min_y, bbx_x_len, bbx_y_len, shape)
-#         box = [[max_y, min_x], [min_y, min_x], [min_y, max_x], [max_x, max_y]]
-#
-#         set_dict[name]["scaled_tag"] = scaled_shape
-#         set_dict[name]["box"] = box
-#         set_dict[name]["face"] = set_dict[name]["image"][min_x : max_x + 1, min_y : max_y+1]
 
 
 def preprocess_data(path):
@@ -50,7 +25,6 @@ def preprocess_data(path):
 
         curr_path = path + '/train_' + str(i+1)
         for filename in os.listdir(curr_path):
-            #im = np.array(Image.open(curr_path + '/' + filename))
             im = read_image(curr_path + '/' + filename, GS_REP)
             nice_name = filename[:-4]
             train_dict[str(nice_name)] = {"image": im}
@@ -87,13 +61,21 @@ def preprocess_data(path):
     return mean_shape, train, test, all_training_tags, all_testing_tags, all_true_train_shapes
 
 
+def scale_shape(origin_shape, target_shape_size):
+    return origin_shape
+
+
+def get_scaled_pixels_according_mean_shape(origin_shape, target_shape, origin_pixels_to_sample, target_img):
+    return origin_pixels_to_sample
+
+
 def generate_training_data(train, all_true_train_shapes, mean_shape):
     train_data = []
     if len(all_true_train_shapes) == 1 or len(all_true_train_shapes) == 0:
         print("NOPE")
         exit(1)
 
-    extracted_pixels_by_mean_shape = generate_rand_centered_pixels_by_mean(mean_shape)
+    extracted_pixels_by_mean_shape = generate_rand_pixels_by_mean(mean_shape)
 
     for i, sample in enumerate(train):
         initial_shapes_option_probabilities = [1/(len(all_true_train_shapes) - 1)] * len(all_true_train_shapes)
@@ -101,7 +83,11 @@ def generate_training_data(train, all_true_train_shapes, mean_shape):
         curr_est_shape = np.random.choice(all_true_train_shapes, p=initial_shapes_option_probabilities)
         curr_est_shape = scale_shape(curr_est_shape, np.shape(sample.face))
 
-        curr_pixels = get_scaled_pixels_according_mean_shape(extracted_pixels_by_mean_shape, curr_est_shape, sample.face_img)
+        curr_pixels = get_scaled_pixels_according_mean_shape(mean_shape, curr_est_shape, extracted_pixels_by_mean_shape, sample.face_img)
+
         curr_train_img = TrainImage(curr_pixels, curr_est_shape, np.zeros(curr_est_shape.size), np.zeros(curr_est_shape.size),
                                     sample.true_shape, sample.face)
-    pass
+
+        train_data.append(curr_train_img)
+
+    return train_data

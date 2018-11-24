@@ -1,9 +1,6 @@
 from tree import Tree
 from utils import *
 
-'"TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition", "true_shape", "face_img"]'
-
-
 
 def calc_transform(mean_shape, curr_est_shape):
     pass
