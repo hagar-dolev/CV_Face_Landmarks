@@ -1,12 +1,8 @@
-import numpy as np
-from tree import Tree, TrainImage
+from tree import Tree
+from utils import *
 
 '"TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition", "true_shape", "face_img"]'
 
-Shrinkage_factor = 0.1
-Tree_Amount = 20
-Trees_Depth = 4
-Pool_size = 400
 
 
 def calc_transform(mean_shape, curr_est_shape):

@@ -1,13 +1,5 @@
-import collections
-import numpy as np
-# class FaceImg(object):
-#     def __init__(self, image, curr_shape):
+from utils import *
 
-Condition = collections.namedtuple("Condition", ["pixel_a_loc", "pixel_b_loc", "threshold"])
-TrainImage = collections.namedtuple("TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition",
-                                                   "regressor_addition", "true_shape", "face_img"])
-Intensity_Change_Threshold = 100
-Amount_of_Rand_conditions = 100
 
 class Node(object):
 
@@ -18,15 +10,9 @@ class Node(object):
         self.curr_depth = curr_depth
         self.max_depth = max_depth
 
-        # self.images = images
         self.pool_size = pool_size
 
         self.condition = None
-
-        # self.parent = None
-
-        # self.right_imgs = None
-        # self.left_imgs = None
 
         self.leaf = False
         self.delta_sum = None  ## Should be shape size
@@ -35,12 +21,6 @@ class Node(object):
 
         if curr_depth == max_depth:
             self.leaf = True
-
-    def set_right_child(self):
-        pass
-
-    def set_left_child(self):
-        pass
 
     def generate_rand_cond(self):
         pixel_a, pixel_b = np.random.choice(range(self.pool_size), 2)
@@ -175,3 +155,4 @@ class Tree(object):
             predictions.append(self.root.predict(image))
 
         return predictions
+
