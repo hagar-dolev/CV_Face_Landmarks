@@ -4,13 +4,14 @@ import numpy as np
 #     def __init__(self, image, curr_shape):
 
 Condition = collections.namedtuple("Condition", ["pixel_a_loc", "pixel_b_loc", "threshold"])
-TrainImage = collections.namedtuple("TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition", "true_shape", "face_img"])
+TrainImage = collections.namedtuple("TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition",
+                                                   "regressor_addition", "true_shape", "face_img"])
 Intensity_Change_Threshold = 100
 Amount_of_Rand_conditions = 100
 
 class Node(object):
 
-    def __init__(self, curr_depth, max_depth, pixels_pool): # images):
+    def __init__(self, curr_depth, max_depth, pool_size): # images):
         self.left = None
         self.right = None
 
@@ -18,7 +19,7 @@ class Node(object):
         self.max_depth = max_depth
 
         # self.images = images
-        self.pixels_pool = pixels_pool
+        self.pool_size = pool_size
 
         self.condition = None
 
@@ -35,18 +36,17 @@ class Node(object):
         if curr_depth == max_depth:
             self.leaf = True
 
-
     def set_right_child(self):
         pass
+
     def set_left_child(self):
         pass
 
     def generate_rand_cond(self):
-        pixel_a, pixel_b = np.random.choice(self.pixels_pool, 2)
+        pixel_a, pixel_b = np.random.choice(range(self.pool_size), 2)
         threshold = np.random.random() * Intensity_Change_Threshold
 
         return Condition(pixel_a, pixel_b, threshold)
-
 
     def calc_lserror(self, cond, images):
         sum_average_right = 0
@@ -72,8 +72,6 @@ class Node(object):
             error += np.linalg.norm(image.true_shape - sum_average_left) ## Euclidian dist
 
         return error
-
-
 
     def randomize_and_choose_cond(self, images):
         curr_cond = self.generate_rand_cond()
@@ -104,20 +102,16 @@ class Node(object):
 
         return min_cond, right_imgs, left_imgs
 
-
-    def set_leaf_params(self, cond, images):
+    def set_leaf_params(self, cond, right_imgs, left_imgs):
         sum_average_right = 0
         sum_average_left = 0
-        right_imgs_count = 0
-        left_imgs_count = 0
+        right_imgs_count = len(right_imgs)
+        left_imgs_count = len(left_imgs)
 
-        for image in images:
-            if image.curr_pixels[cond.pixel_a_loc] - image.curr_pixels[cond.pixel_b_loc] > cond.threshold:
-                sum_average_right += (image.true_shape - image.curr_est_shape)
-                right_imgs_count += 1
-            else:
-                sum_average_left += (image.true_shape - image.curr_est_shape)
-                left_imgs_count += 1
+        for img in right_imgs:
+            sum_average_right += (img.true_shape - img.curr_est_shape)
+        for img in left_imgs:
+            sum_average_left += (img.true_shape - img.curr_est_shape)
 
         sum_average_right /= right_imgs_count
         sum_average_left /= left_imgs_count
@@ -126,47 +120,58 @@ class Node(object):
         self.left_delta_average = sum_average_left
         self.condition = cond
 
+        for img in right_imgs:
+            img.curr_addition = self.right_delta_average
+        for img in left_imgs:
+            img.curr_addition = self.left_delta_average
 
     def train(self, images):
         self.condition, right_imgs, left_imgs = self.randomize_and_choose_cond(images)
 
         if self.leaf:
-            self.set_leaf_params(self.condition, images)
+            self.set_leaf_params(self.condition, right_imgs, left_imgs)
             return
 
-        self.right = Node(self.curr_depth + 1, self.max_depth, self.pixels_pool)
-        self.left = Node(self.curr_depth + 1, self.max_depth, self.pixels_pool)
+        self.right = Node(self.curr_depth + 1, self.max_depth, self.pool_size)
+        self.left = Node(self.curr_depth + 1, self.max_depth, self.pool_size)
 
         self.right.train(right_imgs)
         self.left.train(left_imgs)
 
-        # self.images = images
+    def predict(self, image):
+        if self.leaf:
+            if image.curr_pixels[self.condition.pixel_a_loc] - image.curr_pixels[self.condition.pixel_b_loc] > self.condition.threshold:
+                return self.right_delta_average
+            return self.left_delta_average
 
-    # def train(self, pixels, shape_delta):
-    #     self.count_images += 1
-    #     if not self.leaf:
-    #         if pixels[self.pixel_index1] - pixels[self.pixel_index2] > self.threshold:
-    #             self.right.train(pixels, shape_delta)
-    #         else:
-    #             self.left.train(pixels, shape_delta)
-    #     else:
-    #         self.delta_sum += shape_delta
-    #         self.delta_average = self.delta_sum / self.count_images
-    #
-    #
-    # def predict(self, pixels):
-    #     if not self.leaf:
-    #         if pixels[self.pixel_index1] - pixels[self.pixel_index2] > self.threshold:
-    #             return self.right.predict(pixels)
-    #         else:
-    #             return self.left.predict(pixels)
-    #     return self.delta_average
+        else:
+            if image.curr_pixels[self.condition.pixel_a_loc] - image.curr_pixels[self.condition.pixel_b_loc] > self.condition.threshold:
+                return self.right.predict()
+            return self.left.predict()
 
 
 class Tree(object):
-    def __init__(self, depth):
+    def __init__(self, depth, pool_size):
         self.root = None
         self.depth = depth
+        self.pool_size = pool_size
 
+    def train(self, images):
+        """
 
-    def build(self, pixel_indicises, ):
+        :param images: of the type [ TrainImage, ..., TrainImage]
+        "TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition", "true_shape", "face_img"]
+        :return:
+        """
+        self.root = Node(0, self.depth, self.pool_size)
+        self.root.train(images)
+
+    def predict_delta(self, image):
+        return self.root.predict(image)
+
+    def predict_deltas_images(self, images):
+        predictions = []
+        for image in images:
+            predictions.append(self.root.predict(image))
+
+        return predictions
