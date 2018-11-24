@@ -1,19 +1,37 @@
 import numpy as np
 from PIL import Image
 import os
+import collections
+
+try:
+    import cPickle as pickle
+except ModuleNotFoundError:
+    import pickle
 
 """set = {name: {tag: [[]] , image: [[]], face: [[]],
-                scaled_tag: [[]], box: [[]], bbx_x_len: int, bbx_y_len: int,
-                initial_mean_shape_here: [[]],
-                curr_shape_estimation : [[]], improvement : [[]]}"""
+                scaled_tag: [[]], box: [[]], bbx_x_len: int, bbx_y_len: int,"""
+
+TrainImage = collections.namedtuple("TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition",
+                                                   "regressor_addition", "true_shape", "face_img"])
 
 T = 5   # amount of regressors (forests) in the cascade
 K = 10  # amount of trees in the forest
 learning_rate_param = 0.8
 
+Shrinkage_factor = 0.1
+Tree_Amount = 20
+Trees_Depth = 4
+Pool_size = 400
 
-def generate_training_data():
-    pass
+
+def generate_rand_centered_pixels_by_mean(mean_shape):
+    max_y, min_y, max_x, min_x = find_bounding_box(mean_shape)
+    rand_x = np.random.choice(max_x, Pool_size)
+    rand_y = np.random.choice(max_y, Pool_size)
+
+    points = np.array([rand_x, rand_y])
+
+    return points.transpose()
 
 
 def find_bounding_box(shape):
@@ -22,22 +40,11 @@ def find_bounding_box(shape):
     max_x = np.max(shape[:][0])
     min_x = np.min(shape[:][0])
 
-    # size1 = max_y - min_y
-    # size2 = max_x - min_x
-    #
-    # if size1 > size2:
-    #     addition = int((size1 - size2)/2)
-    #     min_x -= addition
-    #     max_x += addition
-    # elif size1 < size2:
-    #     addition = int((size2 - size1)/2)
-    #     min_y -= addition
-    #     max_y += addition
-    return max_y, min_y, max_x, min_x #np.array(box)   #.clip(min=0)
+    return max_y, min_y, max_x, min_x
 
 
 def scale_shape_to_percentage(min_x, min_y, bbx_x_len, bbx_y_len, shape):
-    ## TODO: maybe should be changed center
+    ## TODO: maybe should be changed center and not working
     scaled_shape = np.array(shape)
     scaled_shape[:, 0] = (scaled_shape[:, 0] - min_x) / bbx_x_len
     scaled_shape[:, 1] = (scaled_shape[:, 1] - min_y) / bbx_y_len
@@ -59,12 +66,12 @@ def scale_all(set_dict):
         set_dict[name]["box"] = box
         set_dict[name]["bbx_x_len"] = bbx_x_len
         set_dict[name]["bbx_y_len"] = bbx_y_len
-        # set_dict[name]["face"] = set_dict[name]["image"][min_x : max_x + 1, min_y : max_y+1]
+        # set_dict[name]["face"] = set_dict[name]["image"][min_x : max_x + 1, min_y : max_y+1]  TODO: needed but not working with PIL
 
 
 def calc_mean_shape(scaled_shapes):
     ## TODO: maybe should be changed center
-    mean_shape = np.zeros(np.shape(scaled_shapes))
+    mean_shape = np.zeros(np.shape(scaled_shapes[0]))
 
     for shape in scaled_shapes:
         mean_shape += shape
@@ -120,15 +127,37 @@ def preprocess_data():
 
     scale_all(train)
     scale_all(test)
-    all_scaled_training_tags = np.array([(lambda x: x["scaled_tag"])(x) for x in train.values()])
-    all_scaled_test_tags = np.array([(lambda x: x["scaled_tag"])(x) for x in test.values()])
+    train = train.values()
+    test = test.values()
+    all_scaled_training_tags = np.array([(lambda x: x["scaled_tag"])(x) for x in train])
+    all_scaled_test_tags = np.array([(lambda x: x["scaled_tag"])(x) for x in test])
     mean_shape = calc_mean_shape(np.array(all_scaled_training_tags))
 
     return mean_shape, train, test, all_training_tags, all_testing_tags, all_scaled_training_tags, all_scaled_test_tags
 
 
+def generate_training_data(train, all_scaled_training_tags, mean_shape):
+    train_data = []
+    if len(all_scaled_training_tags) == 1 or len(all_scaled_training_tags) == 0:
+        print("NOPE")
+        exit(1)
+
+    extracted_pixels_by_mean_shape = generate_rand_centered_pixels_by_mean(mean_shape)
+
+    for i, sample in enumerate(train):
+        initial_shapes_option_probabilities = [1/(len(all_scaled_training_tags) - 1)] * len(all_scaled_training_tags)
+        initial_shapes_option_probabilities[i] = 0
+        curr_est_shape = np.random.choice(all_scaled_training_tags, p=initial_shapes_option_probabilities)
+
+        curr_pixels = get_scaled_pixels_according_mean_shape(extracted_pixels_by_mean_shape, sample.face_img)
+        curr_train_img = TrainImage(curr_pixels, curr_est_shape, np.zeros(curr_est_shape.size), np.zeros(curr_est_shape.size),
+                                    sample["tag"], sample["face"])
+    pass
+
+
 def main():
     mean_shape, train, test, all_training_tags, all_testing_tags, all_scaled_training_tags, all_scaled_test_tags = preprocess_data()
+    train_data = generate_training_data(train)
 
 
 
