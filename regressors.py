@@ -2,8 +2,8 @@ from tree import Tree
 from utils import *
 
 
-def calc_transform(mean_shape, curr_est_shape):
-    pass
+# def calc_transform(mean_shape, curr_est_shape):
+#     pass
 
 
 # def get_new_pixels(pixel_loc_in_meanShape, other_shape, face_img):
@@ -41,16 +41,38 @@ class Regressor(object):
 
                 # img.curr_pixels = get_new_pixels(self.pixel_loc_in_meanShape, img.curr_est_shape.astype(int), img.face_img)
 
-    def predict(self, face):
-        curr_est_shape = scale_shape(np.shape(face), self.mean_shape)
-        indicises = [scale_shape(np.shape(face), self.pixel_loc_in_meanShape)[:,1], scale_shape(np.shape(face), self.pixel_loc_in_meanShape)[:,0]]
-        if face.shape[0] == 0 or face.shape[1] == 0:
+    def predict_one(self, sample):
+        curr_est_shape = scale_shape(np.shape(sample.face), self.mean_shape).astype(np.float64)
+        indicises = [scale_shape(np.shape(sample.face), self.pixel_loc_in_meanShape)[:, 1], scale_shape(np.shape(sample.face), self.pixel_loc_in_meanShape)[:, 0]]
+        if sample.face.shape[0] == 0 or sample.face.shape[1] == 0:
             pass
         else:
-            curr_pixels = face[indicises]
+            curr_pixels = sample.face[indicises]
             curr_train_img = TrainImage(curr_pixels, curr_est_shape, np.zeros(curr_est_shape.size),
                                         np.zeros(curr_est_shape.size),
-                                        face.true_shape, face.face)
-        for tree in self.trees:
+                                        sample.true_shape, sample.face)
+            for tree in self.trees:
+                curr_est_shape += tree.predict_delta(curr_train_img).astype(np.float64)
 
+        return curr_est_shape
 
+    # def predict_many(self, faces):
+    #     test_samples = []
+    #     for face in faces:
+    #         curr_est_shape = scale_shape(np.shape(face), self.mean_shape)
+    #         indicises = [scale_shape(np.shape(face), self.pixel_loc_in_meanShape)[:,1], scale_shape(np.shape(face), self.pixel_loc_in_meanShape)[:,0]]
+    #         if face.shape[0] == 0 or face.shape[1] == 0:
+    #             pass
+    #         else:
+    #             curr_pixels = face[indicises]
+    #             curr_train_img = TrainImage(curr_pixels, curr_est_shape, np.zeros(curr_est_shape.size),
+    #                                         np.zeros(curr_est_shape.size),
+    #                                         face.true_shape, face.face)
+    #             test_samples.append(curr_train_img)
+    #
+    #     for tree in self.trees:
+    #         delta_additions = tree.predict_delta(test_samples)
+    #         for face, delta in enumerate(test_samples, delta_additions):
+    #             face.curr_est_shape += delta
+    #
+    #     return

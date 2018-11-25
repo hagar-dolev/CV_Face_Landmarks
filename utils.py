@@ -35,6 +35,7 @@ class Sample(object):
         self.name = name
         self.face = face
         self.true_shape = true_shape
+        self.curr_est_shape = None
 
 
 class Condition(object):
