@@ -16,13 +16,13 @@ def preprocess_data(path):
     train = []
     test = []
     curr_path = ''
-    for i in range(2):
-        if i == 0:
-            curr_path = path + '/test'
-            for filename in os.listdir(curr_path):
-                im = read_image(curr_path + '/' + filename, GS_REP)
-                nice_name = filename[:-4]
-                test_dict[str(nice_name)] = {"image": im}
+    for i in range(3):
+        # if i == 0:
+        #     curr_path = path + '/test'
+        #     for filename in os.listdir(curr_path):
+        #         im = read_image(curr_path + '/' + filename, GS_REP)
+        #         nice_name = filename[:-4]
+        #         test_dict[str(nice_name)] = {"image": im}
 
         print(curr_path)
 
@@ -57,19 +57,6 @@ def preprocess_data(path):
     return mean_shape, train, test, all_true_train_shapes
 
 
-def scale_shape(dest_shape, shape_points):
-    """
-    scales a list of points to a destination shape
-    """
-    max_p = np.amax(shape_points, axis=0)
-    n, m = (dest_shape[1] - 4) / max_p[0], (dest_shape[0] - 4) / max_p[1]
-    resized_x = np.trunc(shape_points[:, 0] * n)
-    resized_y = np.trunc(shape_points[:, 1] * m)
-    resized_x = resized_x[np.newaxis, :].transpose()
-    resized_y = resized_y[np.newaxis, :].transpose()
-    # if max_p[1] > dest_shape[0] or max_p[0] > dest_shape[1]:
-
-    return np.hstack((resized_x.astype(np.int), resized_y.astype(np.int))).clip(0)
 
 
 def compute_similarity_transform(target, origin):
@@ -146,4 +133,4 @@ def generate_training_data(train, all_true_train_shapes, mean_shape):
 
             train_data.append(curr_train_img)
 
-    return train_data
+    return train_data, extracted_pixels_by_mean_shape

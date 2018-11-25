@@ -59,6 +59,8 @@ class Node(object):
         for image in left_imgs:
             error += np.linalg.norm(image.true_shape - sum_average_left) ## Euclidian dist
 
+        if len(right_imgs) == 0 or len(left_imgs) == 0:
+            error = 10000000
         return error
 
     def randomize_and_choose_cond(self, images):
@@ -75,6 +77,7 @@ class Node(object):
         for i in range(Amount_of_Rand_conditions):
             curr_cond = self.generate_rand_cond()
             curr_err = self.calc_lserror(curr_cond, images)
+
             if curr_err < min_err:
                 min_err = curr_err
                 min_cond = curr_cond
@@ -133,6 +136,7 @@ class Node(object):
             img.curr_addition = self.left_delta_average
 
     def train(self, images):
+        print(np.shape(images))
         self.condition, right_imgs, left_imgs = self.randomize_and_choose_cond(images)
 
         if self.leaf:
