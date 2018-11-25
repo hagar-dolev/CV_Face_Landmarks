@@ -37,25 +37,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-
-    # file = open("/Users/galzemach/School/0.HUJI/B/Computer Vision/Project/data/annotation/338.txt")
-    file = open("/Users/galzemach/School/0.HUJI/B/Computer Vision/Project/data/annotation/336.txt")
-    name = file.readline().strip()
-    points = []
-    for line in file.readlines():
-        x, y = line.split(',')
-        x = float(x.strip())
-        y = float(y.strip())
-        points.append([x, y])
-
-    file.close()
-    points = np.array(points)
-
-    im = read_image("/Users/galzemach/School/0.HUJI/B/Computer Vision/Project/data/train_1/16542667_1.jpg", GS_REP)
-
-    scaled_points = scale_shape(im.shape, points)
-    # display_points(im, points)
-    # display_points(im, scaled_points)
-    plt.title("<-- scaled             original -->")
-    display_matches(im, im, scaled_points, points)
+    main()

@@ -36,16 +36,23 @@ class Node(object):
         error = 0
 
         for image in images:
-            print(image.curr_pixels)
+            # print(image.curr_pixels)
             if image.curr_pixels[cond.pixel_a_loc] - image.curr_pixels[cond.pixel_b_loc] > cond.threshold:
                 sum_average_right += (image.true_shape - image.curr_est_shape)
                 right_imgs.append(image)
             else:
                 sum_average_left += (image.true_shape - image.curr_est_shape)
                 left_imgs.append(image)
+        if len(right_imgs) == 0:
+            sum_average_right = 0
+            sum_average_left = sum_average_left/len(left_imgs)
+        elif len(left_imgs) == 0:
+            sum_average_left = 0
+            sum_average_right = sum_average_right/len(right_imgs)
 
-        sum_average_right /= len(right_imgs)
-        sum_average_left /= len(left_imgs)
+        else:
+            sum_average_right = sum_average_right / len(right_imgs)
+            sum_average_left = sum_average_left/len(left_imgs)
 
         for image in right_imgs:
             error += np.linalg.norm(image.true_shape - sum_average_right) ## Euclidian dist
@@ -55,6 +62,11 @@ class Node(object):
         return error
 
     def randomize_and_choose_cond(self, images):
+        if len(images) == 0:
+            print("why like this")
+            self.condition = self.generate_rand_cond()
+            return self.condition, [], []
+
         curr_cond = self.generate_rand_cond()
         curr_err = self.calc_lserror(curr_cond, images)
         min_err = curr_err
@@ -88,14 +100,28 @@ class Node(object):
         sum_average_left = 0
         right_imgs_count = len(right_imgs)
         left_imgs_count = len(left_imgs)
+        if (left_imgs_count + right_imgs_count) == 0:
+            print("whyyyyyy 2")
+            self.right_delta_average = 0
+            self.left_delta_average = 0
+            self.condition = cond
+            return
 
         for img in right_imgs:
             sum_average_right += (img.true_shape - img.curr_est_shape)
         for img in left_imgs:
             sum_average_left += (img.true_shape - img.curr_est_shape)
 
-        sum_average_right /= right_imgs_count
-        sum_average_left /= left_imgs_count
+        if len(right_imgs) == 0:
+            sum_average_right = 0
+            sum_average_left = sum_average_left/len(left_imgs)
+        elif len(left_imgs) == 0:
+            sum_average_left = 0
+            sum_average_right = sum_average_right/len(right_imgs)
+
+        else:
+            sum_average_right = sum_average_right/right_imgs_count
+            sum_average_left = sum_average_left/left_imgs_count
 
         self.right_delta_average = sum_average_right
         self.left_delta_average = sum_average_left

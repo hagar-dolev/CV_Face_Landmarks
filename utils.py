@@ -23,11 +23,38 @@ Pool_size = 400
 Intensity_Change_Threshold = 100  # The largest threshold for a node
 Amount_of_Rand_conditions = 100   # How many conditions are extracted before choosing one in a node
 
-Sample = collections.namedtuple("Sample", ["name", "face", "true_shape"])
+# Sample = collections.namedtuple("Sample", ["name", "face", "true_shape"])
+#
+# Condition = collections.namedtuple("Condition", ["pixel_a_loc", "pixel_b_loc", "threshold"])
+# TrainImage = collections.namedtuple("TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition",
+#                                                    "regressor_addition", "true_shape", "face_img"])
 
-Condition = collections.namedtuple("Condition", ["pixel_a_loc", "pixel_b_loc", "threshold"])
-TrainImage = collections.namedtuple("TrainImage", ["curr_pixels", "curr_est_shape", "curr_addition",
-                                                   "regressor_addition", "true_shape", "face_img"])
+
+class Sample(object):
+    def __init__(self, name, face, true_shape):
+        self.name = name
+        self.face = face
+        self.true_shape = true_shape
+
+
+class Condition(object):
+    def __init__(self,  pixel_a_loc, pixel_b_loc, threshold):
+        self.pixel_a_loc = pixel_a_loc
+        self.pixel_b_loc = pixel_b_loc
+        self.threshold = threshold
+
+
+class TrainImage(object):
+
+    def __init__(self, curr_pixels, curr_est_shape, curr_addition, regressor_addition, true_shape, face_img):
+
+        self.curr_pixels = curr_pixels
+        self.curr_est_shape = curr_est_shape
+        self.curr_addition = curr_addition
+        self.regressor_addition = regressor_addition
+        self.true_shape = true_shape
+        self.face_img = face_img
+
 
 
 def calc_mean_shape(shapes):
@@ -39,8 +66,13 @@ def calc_mean_shape(shapes):
     mean_shape /= len(shapes)
     min_x = np.min(mean_shape[:][0])  # Center it to the corner
     min_y = np.min(mean_shape[:][1])
-    mean_shape[:][0] -= min_x + 1
-    mean_shape[:][1] -= min_y + 1
+    # print(subs.shape)
+    for i in range(mean_shape.shape[0]):
+        mean_shape[i][0] -= min_x
+        mean_shape[i][1] -= min_y
+    # mean_shape[:][0] -= subsx
+    # mean_shape[:][1] -= subsy
+
     return mean_shape
 
 
@@ -55,20 +87,33 @@ def generate_rand_pixels_by_mean(mean_shape):
 
 
 def find_bounding_box(shape):
-    max_x, max_y = np.amax(shape, axis=0)
-    min_x, min_y = np.amin(shape, axis=0)
+    max_y = np.amax(shape, 0)[1]
+    min_y = np.amin(shape, 0)[1]
+
+    max_x = np.amax(shape, 0)[0]
+    min_x = np.amin(shape, 0)[0]
+
     return max_y, min_y, max_x, min_x
 
 
 def get_face(image, points):
-    # plt.imshow(image)
-    # plt.show()
-    # display_matches(image, image, points, points)
     max_y, min_y, max_x, min_x = find_bounding_box(points)
     face = image[int(round(min_y)): int(round(max_y)) + 1, int(round(min_x)): int(round(max_x)) + 1]
-    plt.imshow(face)
-    plt.show()
     return face
+
+
+def center_points(points):
+    min_x = np.amin(points, axis=0)[0]  # Center it to the corner
+    min_y = np.amin(points, axis=0)[1]
+    points = np.array(points)
+    if min_y < 0 :
+        min_y = 0
+    if min_x < 0 :
+        min_x = 0
+    for i in range(points.shape[0]):
+        points[i][0] -= min_x
+        points[i][1] -= min_y
+    return points
 
 ######################################################################
 
@@ -194,7 +239,6 @@ def warp_image(image, homography):
     """
     return np.dstack([warp_channel(image[..., channel], homography) for channel in range(3)])
 
-
 def display_matches(im1, im2, points1, points2):
     """
     Display matching points.
@@ -207,41 +251,11 @@ def display_matches(im1, im2, points1, points2):
     full_im = np.hstack((im1, im2))
     plt.imshow(full_im, cmap='gray')
 
-    s_points2 = points2.copy()
+    s_points2 = np.array(points2.copy())
     s_points2[:, 0] += im1.shape[1]
 
     # plotting points
     full_points = np.vstack((points1, s_points2))
-    plt.plot(full_points[:, 0], full_points[:, 1], 'ro', markersize=1.5)
-
-    # # preparing inliers
-    # m = points1.shape[0]
-    # is_inlier = np.zeros(m).astype(bool)
-    # is_inlier[inliers] = True
-    #
-    # # plotting lines
-    # plot_lines(points1, s_points2, ~is_inlier, "b")
-    # plot_lines(points1, s_points2, is_inlier, "y", .6)
-
-    plt.show()
-
-
-def display_points(im1, points1):
-    """
-    Display matching points.
-    :param im1: A grayscale image.
-    :param points1: An aray shape (N,2), containing N rows of [x,y] coordinates of matched points in im1.
-    """
-    # full_im = np.hstack((im1, im2))
-    full_im = im1
-    plt.imshow(full_im, cmap='gray')
-
-    # s_points2 = points2.copy()
-    # s_points2[:, 0] += im1.shape[1]
-
-    # plotting points
-    # full_points = np.vstack((points1, s_points2))
-    full_points = points1
     plt.plot(full_points[:, 0], full_points[:, 1], 'ro', markersize=1.5)
 
     # # preparing inliers
