@@ -20,8 +20,8 @@ Tree_Amount = 20
 Trees_Depth = 4
 Pool_size = 400
 
-Intensity_Change_Threshold = 100  # The largest threshold for a node
-Amount_of_Rand_conditions = 100   # How many conditions are extracted before choosing one in a node
+Intensity_Change_Threshold = 1/10000  # The largest threshold for a node
+Amount_of_Rand_conditions = 200   # How many conditions are extracted before choosing one in a node
 
 # Sample = collections.namedtuple("Sample", ["name", "face", "true_shape"])
 #
@@ -55,6 +55,22 @@ class TrainImage(object):
         self.true_shape = true_shape
         self.face_img = face_img
 
+
+def scale_shape(dest_shape, shape_points):
+    """
+    scales a list of points to a destination shape
+    """
+    max_p = np.amax(shape_points, axis=0)
+    if max_p[1] == 0 or max_p[0] == 0:
+        return shape_points
+    n, m = (dest_shape[1] - 4) / max_p[0], (dest_shape[0] - 4) / max_p[1]
+    resized_x = np.trunc(shape_points[:, 0] * n)
+    resized_y = np.trunc(shape_points[:, 1] * m)
+    resized_x = resized_x[np.newaxis, :].transpose()
+    resized_y = resized_y[np.newaxis, :].transpose()
+    # if max_p[1] > dest_shape[0] or max_p[0] > dest_shape[1]:
+
+    return np.hstack((resized_x.astype(np.int), resized_y.astype(np.int))).clip(0)
 
 
 def calc_mean_shape(shapes):
