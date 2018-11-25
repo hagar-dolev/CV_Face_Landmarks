@@ -16,21 +16,21 @@ def preprocess_data(path):
     train = []
     test = []
     curr_path = ''
-    for i in range(3):
-        # if i == 0:
-        #     curr_path = path + '/test'
-        #     for filename in os.listdir(curr_path):
-        #         im = read_image(curr_path + '/' + filename, GS_REP)
-        #         nice_name = filename[:-4]
-        #         test_dict[str(nice_name)] = {"image": im}
+    for i in range(1):
+        if i == 0:
+            curr_path = path + '/test'
+            for filename in os.listdir(curr_path):
+                im = read_image(curr_path + '/' + filename, GS_REP)
+                nice_name = filename[:-4]
+                test_dict[str(nice_name)] = {"image": im}
 
-        print(curr_path)
-
-        curr_path = path + '/train_' + str(i+1)
-        for filename in os.listdir(curr_path):
-            im = read_image(curr_path + '/' + filename, GS_REP)
-            nice_name = filename[:-4]
-            train_dict[str(nice_name)] = {"image": im}
+        # print(curr_path)
+        #
+        # curr_path = path + '/train_' + str(i+1)
+        # for filename in os.listdir(curr_path):
+        #     im = read_image(curr_path + '/' + filename, GS_REP)
+        #     nice_name = filename[:-4]
+        #     train_dict[str(nice_name)] = {"image": im}
 
     print("annotation")
     for filename in os.listdir(path + '/annotation'):
@@ -48,11 +48,15 @@ def preprocess_data(path):
             train_dict[name]["true_shape"] = points
             all_training_tags.append(points)
             train.append(Sample(name, get_face(train_dict[name]["image"], points), center_points(points)))
+        elif name in test_dict.keys():
+            test_dict[name]["true_shape"] = points
+            all_testing_tags.append(points)
+            test.append(Sample(name, get_face(test_dict[name]["image"], points), center_points(points)))
 
     all_true_train_shapes = np.array([(lambda x: x.true_shape)(x) for x in train])
-    mean_shape = calc_mean_shape(np.array(all_true_train_shapes))
-
-    test = train
+    # mean_shape = calc_mean_shape(np.array(all_true_train_shapes))
+    mean_shape = []
+    # test = train
 
     return mean_shape, train, test, all_true_train_shapes
 

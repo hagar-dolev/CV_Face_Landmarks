@@ -136,7 +136,7 @@ class Node(object):
             img.curr_addition = self.left_delta_average
 
     def train(self, images):
-        print(np.shape(images))
+        # print(np.shape(images))
         self.condition, right_imgs, left_imgs = self.randomize_and_choose_cond(images)
 
         if self.leaf:
@@ -150,6 +150,11 @@ class Node(object):
         self.left.train(left_imgs)
 
     def predict(self, image):
+        """
+        image of type trainingsample
+        :param image:
+        :return:
+        """
         if self.leaf:
             if image.curr_pixels[self.condition.pixel_a_loc] - image.curr_pixels[self.condition.pixel_b_loc] > self.condition.threshold:
                 return self.right_delta_average
@@ -157,8 +162,8 @@ class Node(object):
 
         else:
             if image.curr_pixels[self.condition.pixel_a_loc] - image.curr_pixels[self.condition.pixel_b_loc] > self.condition.threshold:
-                return self.right.predict()
-            return self.left.predict()
+                return self.right.predict(image)
+            return self.left.predict(image)
 
 
 class Tree(object):
